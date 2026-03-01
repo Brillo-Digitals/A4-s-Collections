@@ -64,9 +64,9 @@ ${items.map((i) => `  • ${i.qty}x ${i.name}\n    ₦${(i.price * i.qty).toLoca
   TOTAL: ₦${total.toLocaleString()}
 ══════════════════════════════════════
   Payment to:
-  Bank: Opay
-  Acc: 8133752548
-  Name: Tokode Roseline Adewola
+  Bank: First Bank of Nigeria
+  Acc: 3229573951
+  Name: Adesiyan Saidat Adenike
 ══════════════════════════════════════
   Thank you for shopping with us! 🛍️
   A4's Collection
@@ -79,7 +79,7 @@ const WA_NUMBER = "2348147294918";
 function buildWAMessage(items, total, ref) {
   const lines = items.map((i) => `• ${i.qty}x ${i.name} — ₦${(i.price * i.qty).toLocaleString()}`).join("\n");
   return encodeURIComponent(
-    `Hello A4's Collection! 👋\n\nI'd like to place the following order:\n\n${lines}\n\n*Total: ₦${total.toLocaleString()}*\n\nOrder Ref: ${ref}\n\nPlease confirm availability before I make payment to:\n🏦 Opay | 8133752548 | Tokode Roseline Adewola`
+    `Hello A4's Collection! 👋\n\nI'd like to place the following order:\n\n${lines}\n\n*Total: ₦${total.toLocaleString()}*\n\nOrder Ref: ${ref}\n\nPlease confirm availability before I make payment to:\n🏦 First Bank of Nigeria | 3229573951 | Adesiyan Saidat Adenike`
   );
 }
 export function CartUI() {
@@ -264,9 +264,9 @@ export function CartUI() {
                 <p style={S.paymentLabel}>Payment Instructions</p>
                 <p style={S.paymentLine}>After confirming, send payment to:</p>
                 <div style={S.paymentDetails}>
-                  <div style={S.payRow}><span>Bank</span><strong>Opay</strong></div>
-                  <div style={S.payRow}><span>Account No.</span><strong>8133752548</strong></div>
-                  <div style={S.payRow}><span>Account Name</span><strong>Tokode Roseline Adewola</strong></div>
+                  <div style={S.payRow}><span>Bank</span><strong>First Bank of Nigeria</strong></div>
+                  <div style={S.payRow}><span>Account No.</span><strong>3229573951</strong></div>
+                  <div style={S.payRow}><span>Account Name</span><strong>Adesiyan Saidat Adenike</strong></div>
                 </div>
                 <p style={{ fontSize: 11, color: "#78716c", marginTop: 10, lineHeight: 1.6 }}>
                   ⚠️ Wait for confirmation reply on WhatsApp before making transfer.
@@ -334,9 +334,9 @@ export function CartUI() {
               <div style={{ ...S.paymentBox, marginTop: 20 }}>
                 <p style={S.paymentLabel}>Send Payment To</p>
                 <div style={S.paymentDetails}>
-                  <div style={S.payRow}><span>Bank</span><strong>Opay</strong></div>
-                  <div style={S.payRow}><span>Acc No.</span><strong>8133752548</strong></div>
-                  <div style={S.payRow}><span>Name</span><strong>Tokode Roseline Adewola</strong></div>
+                  <div style={S.payRow}><span>Bank</span><strong>First Bank of Nigeria</strong></div>
+                  <div style={S.payRow}><span>Acc No.</span><strong>3229573951</strong></div>
+                  <div style={S.payRow}><span>Name</span><strong>Adesiyan Saidat Adenike</strong></div>
                 </div>
               </div>
             </div>
