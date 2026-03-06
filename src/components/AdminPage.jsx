@@ -18,7 +18,26 @@ export default function AdminPage() {
     const [loginError, setLoginError] = useState("");
 
     const [activeTab, setActiveTab] = useState("products");
-    const [newItem, setNewItem] = useState({ name: "", description: "", price: "", image: "" });
+
+    // Base shape for the new schema
+    const initialItemState = {
+        name: "",
+        description: "",
+        price: "",
+        originalPrice: "",
+        image: "",
+        categoryId: "",
+        badge: "",
+        sizes: "", // string, comma separated
+        perks: "", // string, comma separated
+        inStock: true,
+        featured: false,
+        newArrival: false
+    };
+
+    const [newItem, setNewItem] = useState(initialItemState);
+    const [editingItemId, setEditingItemId] = useState(null); // Tracks if we are in "Edit" mode instead of "Create" mode
+
     const [message, setMessage] = useState({ text: "", type: "" });
     const [isSaving, setIsSaving] = useState(false);
 
@@ -38,7 +57,44 @@ export default function AdminPage() {
         }
     };
 
-    const handleAddItem = async (e) => {
+    // Helper to safely parse comma separated strings into arrays
+    const parseCommaString = (str) => {
+        if (!str || typeof str !== 'string') return [];
+        return str.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    };
+
+    // Helper to join arrays into comma separated strings for the input field
+    const toCommaString = (arr) => {
+        if (!Array.isArray(arr)) return "";
+        return arr.join(", ");
+    };
+
+    const handleEditClick = (item, type) => {
+        setActiveTab(type === 'product' ? 'products' : 'collections');
+        setEditingItemId(item.id);
+        setNewItem({
+            name: item.name || "",
+            description: item.description || "",
+            price: item.price || "",
+            originalPrice: item.originalPrice || "",
+            image: item.image || "",
+            categoryId: item.categoryId || "",
+            badge: item.badge || "",
+            sizes: toCommaString(item.sizes),
+            perks: toCommaString(item.perks),
+            inStock: item.inStock ?? true,
+            featured: item.featured ?? false,
+            newArrival: item.newArrival ?? false
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleCancelEdit = () => {
+        setEditingItemId(null);
+        setNewItem(initialItemState);
+    };
+
+    const handleSaveItem = async (e) => {
         e.preventDefault();
         if (!newItem.name || !newItem.image) {
             showMessage("Name and Image Link are required", "error");
@@ -51,28 +107,53 @@ export default function AdminPage() {
             let newCollections = [...collections];
 
             if (activeTab === "products") {
-                const newId = `prod-${Date.now()}`;
-                newProducts.push({
-                    id: newId,
+                const productData = {
+                    id: editingItemId || `prod-${Date.now()}`,
                     name: newItem.name,
+                    description: newItem.description,
                     price: parseFloat(newItem.price) || 0,
-                    description: newItem.description,
-                    image: newItem.image
-                });
+                    originalPrice: parseFloat(newItem.originalPrice) || undefined,
+                    image: newItem.image,
+                    categoryId: newItem.categoryId,
+                    badge: newItem.badge,
+                    sizes: parseCommaString(newItem.sizes),
+                    perks: parseCommaString(newItem.perks),
+                    inStock: newItem.inStock,
+                    featured: newItem.featured,
+                    newArrival: newItem.newArrival
+                };
+
+                // Clean up undefined values cleanly
+                Object.keys(productData).forEach(key => productData[key] === undefined && delete productData[key]);
+
+                if (editingItemId) {
+                    const index = newProducts.findIndex(p => p.id === editingItemId);
+                    if (index !== -1) newProducts[index] = productData;
+                } else {
+                    newProducts.push(productData);
+                }
             } else {
-                const newId = `col-${Date.now()}`;
-                newCollections.push({
-                    id: newId,
+                const collectionData = {
+                    id: editingItemId || `col-${Date.now()}`,
                     name: newItem.name,
                     description: newItem.description,
-                    image: newItem.image
-                });
+                    image: newItem.image,
+                    featured: newItem.featured
+                };
+
+                if (editingItemId) {
+                    const index = newCollections.findIndex(c => c.id === editingItemId);
+                    if (index !== -1) newCollections[index] = collectionData;
+                } else {
+                    newCollections.push(collectionData);
+                }
             }
 
             const success = await updateData(newProducts, newCollections);
             if (success) {
-                showMessage(`Successfully added ${activeTab === 'products' ? 'product' : 'collection'}`);
-                setNewItem({ name: "", description: "", price: "", image: "" });
+                showMessage(`Successfully ${editingItemId ? 'updated' : 'added'} ${activeTab === 'products' ? 'product' : 'collection'}`);
+                setEditingItemId(null);
+                setNewItem(initialItemState);
             } else {
                 showMessage("Failed to save to database", "error");
             }
@@ -98,6 +179,7 @@ export default function AdminPage() {
             const success = await updateData(newProducts, newCollections);
             if (success) {
                 showMessage(`Successfully deleted ${type}`);
+                if (editingItemId === id) handleCancelEdit();
             } else {
                 showMessage("Failed to delete item", "error");
             }
@@ -148,7 +230,7 @@ export default function AdminPage() {
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold">Admin Dashboard</h1>
                     <button
-                        onClick={() => setIsAuthenticated(false)}
+                        onClick={() => { setIsAuthenticated(false); setPasswordInput(""); }}
                         className="text-gray-500 hover:text-black transition-colors"
                     >
                         Logout
@@ -169,13 +251,13 @@ export default function AdminPage() {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
                     <div className="flex border-b border-gray-200">
                         <button
-                            onClick={() => setActiveTab('products')}
+                            onClick={() => { setActiveTab('products'); handleCancelEdit(); }}
                             className={`flex-1 py-4 text-center font-medium transition-colors ${activeTab === 'products' ? 'bg-black text-white' : 'text-gray-500 hover:bg-gray-50'}`}
                         >
                             Manage Products
                         </button>
                         <button
-                            onClick={() => setActiveTab('collections')}
+                            onClick={() => { setActiveTab('collections'); handleCancelEdit(); }}
                             className={`flex-1 py-4 text-center font-medium transition-colors ${activeTab === 'collections' ? 'bg-black text-white' : 'text-gray-500 hover:bg-gray-50'}`}
                         >
                             Manage Collections
@@ -183,30 +265,78 @@ export default function AdminPage() {
                     </div>
 
                     <div className="p-6">
-                        <h2 className="text-xl font-semibold mb-4">Add New {activeTab === 'products' ? 'Product' : 'Collection'}</h2>
-                        <form onSubmit={handleAddItem} className="space-y-4 max-w-2xl">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                                <input
-                                    type="text"
-                                    value={newItem.name}
-                                    onChange={e => setNewItem({ ...newItem, name: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-black outline-none"
-                                    required
-                                />
-                            </div>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-semibold">
+                                {editingItemId ? 'Edit' : 'Add New'} {activeTab === 'products' ? 'Product' : 'Collection'}
+                            </h2>
+                            {editingItemId && (
+                                <button onClick={handleCancelEdit} className="text-sm text-gray-500 hover:text-black underline">
+                                    Cancel Edit
+                                </button>
+                            )}
+                        </div>
 
-                            {activeTab === 'products' && (
+                        <form onSubmit={handleSaveItem} className="space-y-6 max-w-3xl">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Price ($) *</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
                                     <input
-                                        type="number"
-                                        step="0.01"
-                                        value={newItem.price}
-                                        onChange={e => setNewItem({ ...newItem, price: e.target.value })}
+                                        type="text"
+                                        value={newItem.name}
+                                        onChange={e => setNewItem({ ...newItem, name: e.target.value })}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-black outline-none"
                                         required
                                     />
+                                </div>
+
+                                {activeTab === 'products' && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Category ID</label>
+                                        <input
+                                            type="text"
+                                            value={newItem.categoryId}
+                                            onChange={e => setNewItem({ ...newItem, categoryId: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-black outline-none"
+                                            placeholder="e.g. footwear"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            {activeTab === 'products' && (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Price ($) *</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={newItem.price}
+                                            onChange={e => setNewItem({ ...newItem, price: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-black outline-none"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Original Price ($)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={newItem.originalPrice}
+                                            onChange={e => setNewItem({ ...newItem, originalPrice: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-black outline-none"
+                                            placeholder="Optional"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Badge</label>
+                                        <input
+                                            type="text"
+                                            value={newItem.badge}
+                                            onChange={e => setNewItem({ ...newItem, badge: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-black outline-none"
+                                            placeholder="e.g. Sale, New"
+                                        />
+                                    </div>
                                 </div>
                             )}
 
@@ -220,7 +350,7 @@ export default function AdminPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Image Link (URL) *</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Primary Image Link (URL) *</label>
                                 <input
                                     type="url"
                                     value={newItem.image}
@@ -231,12 +361,74 @@ export default function AdminPage() {
                                 />
                             </div>
 
+                            {activeTab === 'products' && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Sizes (comma separated)</label>
+                                        <input
+                                            type="text"
+                                            value={newItem.sizes}
+                                            onChange={e => setNewItem({ ...newItem, sizes: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-black outline-none"
+                                            placeholder="40, 41, 42"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Perks (comma separated)</label>
+                                        <input
+                                            type="text"
+                                            value={newItem.perks}
+                                            onChange={e => setNewItem({ ...newItem, perks: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-black outline-none"
+                                            placeholder="Free shipping, Lifetime repair"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Toggles */}
+                            <div className="flex flex-wrap gap-6 pt-2">
+                                {activeTab === 'products' && (
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={newItem.inStock}
+                                            onChange={e => setNewItem({ ...newItem, inStock: e.target.checked })}
+                                            className="w-4 h-4 text-black focus:ring-black rounded border-gray-300"
+                                        />
+                                        <span className="text-sm font-medium text-gray-900">In Stock</span>
+                                    </label>
+                                )}
+
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={newItem.featured}
+                                        onChange={e => setNewItem({ ...newItem, featured: e.target.checked })}
+                                        className="w-4 h-4 text-black focus:ring-black rounded border-gray-300"
+                                    />
+                                    <span className="text-sm font-medium text-gray-900">Featured</span>
+                                </label>
+
+                                {activeTab === 'products' && (
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={newItem.newArrival}
+                                            onChange={e => setNewItem({ ...newItem, newArrival: e.target.checked })}
+                                            className="w-4 h-4 text-black focus:ring-black rounded border-gray-300"
+                                        />
+                                        <span className="text-sm font-medium text-gray-900">New Arrival</span>
+                                    </label>
+                                )}
+                            </div>
+
                             <button
                                 type="submit"
                                 disabled={isSaving}
-                                className="bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+                                className="bg-black text-white px-8 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
                             >
-                                {isSaving ? "Saving..." : `Add ${activeTab === 'products' ? 'Product' : 'Collection'}`}
+                                {isSaving ? "Saving..." : (editingItemId ? `Update ${activeTab === 'products' ? 'Product' : 'Collection'}` : `Add ${activeTab === 'products' ? 'Product' : 'Collection'}`)}
                             </button>
                         </form>
                     </div>
@@ -249,23 +441,46 @@ export default function AdminPage() {
 
                     <ul className="divide-y divide-gray-200">
                         {(activeTab === 'products' ? products : collections).map(item => (
-                            <li key={item.id} className="p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                            <li key={item.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50 transition-colors">
                                 <div className="flex items-center gap-4">
-                                    <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-md bg-gray-100" />
+                                    <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-md bg-gray-100 shrink-0" />
                                     <div>
-                                        <h3 className="font-semibold text-gray-900">{item.name}</h3>
+                                        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                                            {item.name}
+                                            {item.featured && <span className="px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded-full font-medium">Featured</span>}
+                                            {item.newArrival && <span className="px-2 py-0.5 text-xs bg-purple-100 text-purple-800 rounded-full font-medium">New</span>}
+                                        </h3>
                                         <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
-                                        {item.price !== undefined && <p className="text-sm font-medium mt-1">${item.price}</p>}
+                                        <div className="flex items-center gap-3 mt-1 text-sm">
+                                            {item.price !== undefined && (
+                                                <span className="font-medium text-gray-900">${item.price}</span>
+                                            )}
+                                            {item.originalPrice && (
+                                                <span className="text-gray-400 line-through">${item.originalPrice}</span>
+                                            )}
+                                            {item.categoryId && (
+                                                <span className="text-gray-500 capitalize px-2 py-0.5 bg-gray-100 rounded">Category: {item.categoryId}</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => handleDelete(item.id, activeTab === 'products' ? 'product' : 'collection')}
-                                    disabled={isSaving}
-                                    className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors"
-                                    title="Delete"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
+                                <div className="flex items-center gap-2 sm:ml-auto">
+                                    <button
+                                        onClick={() => handleEditClick(item, activeTab === 'products' ? 'product' : 'collection')}
+                                        disabled={isSaving}
+                                        className="text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg transition-colors text-sm font-medium shrink-0"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(item.id, activeTab === 'products' ? 'product' : 'collection')}
+                                        disabled={isSaving}
+                                        className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors shrink-0"
+                                        title="Delete"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
                             </li>
                         ))}
                         {(activeTab === 'products' ? products : collections).length === 0 && (
