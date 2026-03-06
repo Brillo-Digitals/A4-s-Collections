@@ -108,7 +108,7 @@ export default function AdminPage() {
 
     if (!isAuthenticated) {
         return (
-            <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center px-4">
+            <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center px-4 text-gray-900">
                 <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg border border-gray-100">
                     <div className="flex justify-center mb-6">
                         <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center">
@@ -122,7 +122,7 @@ export default function AdminPage() {
                                 type="password"
                                 value={passwordInput}
                                 onChange={(e) => setPasswordInput(e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
                                 placeholder="Enter admin password"
                                 required
                             />
@@ -140,10 +140,10 @@ export default function AdminPage() {
         );
     }
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading data...</div>;
+    if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-900">Loading data...</div>;
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20 pt-10">
+        <div className="min-h-screen bg-gray-50 pb-20 pt-10 text-gray-900">
             <div className="max-w-5xl mx-auto px-4">
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold">Admin Dashboard</h1>
@@ -191,7 +191,7 @@ export default function AdminPage() {
                                     type="text"
                                     value={newItem.name}
                                     onChange={e => setNewItem({ ...newItem, name: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black outline-none"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-black outline-none"
                                     required
                                 />
                             </div>
@@ -204,7 +204,7 @@ export default function AdminPage() {
                                         step="0.01"
                                         value={newItem.price}
                                         onChange={e => setNewItem({ ...newItem, price: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black outline-none"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-black outline-none"
                                         required
                                     />
                                 </div>
@@ -215,7 +215,7 @@ export default function AdminPage() {
                                 <textarea
                                     value={newItem.description}
                                     onChange={e => setNewItem({ ...newItem, description: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black outline-none h-24 resize-none"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-black outline-none h-24 resize-none"
                                 ></textarea>
                             </div>
 
@@ -226,7 +226,7 @@ export default function AdminPage() {
                                     value={newItem.image}
                                     onChange={e => setNewItem({ ...newItem, image: e.target.value })}
                                     placeholder="https://example.com/image.jpg"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black outline-none"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-black outline-none"
                                     required
                                 />
                             </div>
