@@ -47,8 +47,34 @@ export function ProductProvider({ children }) {
         fetchData();
     }, []);
 
+    const updateData = async (newProducts, newCollections) => {
+        try {
+            const response = await fetch(JSONBIN_URL, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Master-Key": MASTER_KEY
+                },
+                body: JSON.stringify({
+                    products: newProducts,
+                    collections: newCollections
+                })
+            });
+
+            if (!response.ok) throw new Error(`Update failed with status: ${response.status}`);
+
+            setProducts(newProducts);
+            setCollections(newCollections);
+            return true;
+        } catch (err) {
+            console.error("ProductContext Update Error:", err);
+            setError("Failed to update data. Please try again.");
+            return false;
+        }
+    };
+
     return (
-        <ProductContext.Provider value={{ products, collections, loading, error }}>
+        <ProductContext.Provider value={{ products, collections, loading, error, updateData }}>
             {children}
         </ProductContext.Provider>
     );

@@ -26,6 +26,7 @@ function Home() {
 
 import CollectionPage from "./components/CollectionPage"
 import ProductPage from "./components/ProductPage"
+import AdminPage from "./components/AdminPage"
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/collection/:id" element={<CollectionPage />} />
             <Route path="/product/:id" element={<ProductPage />} />
+            <Route path="/hidden-admin-dashboard" element={<AdminPage />} />
           </Routes>
 
           <Footer />
